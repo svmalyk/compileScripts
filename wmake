@@ -1,0 +1,357 @@
+#!/bin/bash
+#
+#This script is used to compile the libraries
+#
+echo "Loading script wmake"
+echo " "
+#echo "ALIAS TO WMAKE FILE OF THE PROJECT: smgmt_wcompile"
+#echo " "
+
+#
+# All possible extensions that the CPP file could have
+# Only files have one of these extensions will be compile
+# In other cases, the script will throw and error and 
+# execution will be stopped
+#
+FILE_EXT=("c" "C" "cpp" "CPP" "cxx" "CXX") 
+
+# Data extracted from the arguments (if any)
+# Further checks will be performed for each error case
+# Expected number of arguments: 2 (two)
+# The name of the project directory (first argument)
+#
+PROJECT_DIR="$1"
+
+# The path/name of the file to be compiled (second argument)
+# The path would depend where the script is executed
+#
+CXX_FILE="$2" # CXX file to be compiled
+
+# Extract the absolute filepath of the file to compile
+#
+CXX_FILEPATH=$(realpath "$CXX_FILE")
+echo 'CXX_FILE_PATH='$CXX_FILEPATH
+
+
+#
+# Check: Arguments required 2 (two)
+#        argument 1: Project Directory (name of the folder)
+#        argument 2: CPP file to compile
+#
+if [ "$#" -ne 2 ]; 
+then 
+    echo "ERROR(9001): Illegal number of parameters"
+    echo 'INFO       : Compile command: wmake $PROJECT_NAME $FILE_NAME_TO_BE_COMPLIED'
+#echo '      Else export the file name using following command'
+#echo 'export $PROJECT_NAME'
+    exit 9001
+fi
+
+
+
+#
+# Check: Existence of project directory
+#        argument 1: Project Directory (name of the folder)
+#        argument 2: CPP file to compile
+#        Use of expression matching operator (=~):
+#	 Check that the substring $PROJECT_DIR is present
+#        in the path CXX_FILEPATH
+#
+if [[ ! $CXX_FILEPATH =~ /${PROJECT_DIR}/ ]]; 
+then
+    echo "ERROR(9002):Project directory "$PROJECT_DIR" not found"
+    echo 'INFO       : Check project directory name '
+    exit 9002
+fi
+
+
+
+#
+# Check: Existence of C++ file 
+#        argument 1: Project Directory (name of the folder)
+#        argument 2: CPP file to compile
+#
+if [ ! -O "$CXX_FILE" ]; 
+then
+    echo "ERROR(9003): File to compile ${2} not found"
+    echo 'INFO       : Check filepath '
+    exit 9003
+fi 
+
+
+
+# Construct: Construction of Project Dir Path
+#            Extract substring upto project name
+#            Append the extracted string with project name
+#
+PROJECT_DIR_PATH=${CXX_FILEPATH%$PROJECT_DIR*}$PROJECT_DIR
+
+
+
+# Extract the name of the file to compile if the argument 
+# contains path to the file to compile
+#
+CXX_FILENAME="$(basename "$CXX_FILE")"
+
+# File name without extension
+#
+CXX_FILE_NO_EXT=${CXX_FILENAME%%.*}
+
+# File extension: will be used to check whether the argument is a CPP file
+#
+CXX_FILE_EXT="${CXX_FILENAME##*.}" # get the file extension
+
+
+
+
+#
+# Check: Verify that the file to be compile has a valid extension
+#        Valid extensions defined in a array FILE_EXT
+#        Check is done by checking the file extesnsion
+#        against each element of the array FILE_EXT
+#
+if [[ ! " ${FILE_EXT[*]} " =~  ${CXX_FILE_EXT}  ]]; then
+echo 'ERROR: The file to compile is not a C++ file'
+echo 'INFO:  Check order of the arguments'
+echo '       Compile command: wmake $PROJECT_NAME $FILE_NAME_TO_BE_COMPLIED'
+fi
+
+
+
+:<<'END'
+# Verification: Check the values assigned to the variables
+echo 'PROJECT_DIR='$PROJECT_DIR
+echo 'CXX_FILE='$CXX_FILE
+echo 'CXX_FILE_PATH='$CXX_FILEPATH
+echo 'CXX_FILENAME='$CXX_FILENAME
+echo 'CXX_FILE_NO_EXT='$CXX_FILE_NO_EXT
+echo 'CXX_FILE_EXT='$CXX_FILE_EXT
+echo 'PROJECT_DIR_PATH'=$PROJECT_DIR_PATH
+END
+
+#
+# Construct the relative paths of all directories in the project
+#
+RELATIVE_PATH_LIB_DIR=$PROJECT_DIR/lib
+RELATIVE_PATH_BIN_DIR=$PROJECT_DIR/bin
+RELATIVE_PATH_SRC_DIR=$PROJECT_DIR/src
+RELATIVE_PATH_APP_DIR=$PROJECT_DIR/applications
+RELATIVE_PATH_LNINCLUDE_DIR=$PROJECT_DIR/lnInclude
+
+
+#
+# Construct the absolute paths of all directories in the project
+#
+PROJECT_LIB_DIR_PATH=$PROJECT_DIR_PATH/lib
+PROJECT_BIN_DIR_PATH=$PROJECT_DIR_PATH/bin
+PROJECT_SRC_DIR_PATH=$PROJECT_DIR_PATH/src
+PROJECT_APP_DIR_PATH=$PROJECT_DIR_PATH/applications
+PROJECT_LNINCLUDE_DIR_PATH=$PROJECT_DIR_PATH/lnInclude
+
+
+
+:<<'END'
+echo RELATIVE_PATH_LIB_DIR=$RELATIVE_PATH_LIB_DIR
+echo RELATIVE_PATH_BIN_DIR=$RELATIVE_PATH_BIN_DIR
+echo RELATIVE_PATH_SRC_DIR=$RELATIVE_PATH_SRC_DIR
+echo RELATIVE_PATH_APP_DIR=$RELATIVE_PATH_APP_DIR
+echo RELATIVE_PATH_LNINCLUDE_DIR=$RELATIVE_PATH_LNINCLUDE_DIR
+
+
+echo PROJECT_LIB_DIR_PATH=$PROJECT_LIB_DIR_PATH
+echo PROJECT_BIN_DIR_PATH=$PROJECT_BIN_DIR_PATH
+echo PROJECT_SRC_DIR_PATH=$PROJECT_SRC_DIR_PATH
+echo PROJECT_APP_DIR_PATH=$PROJECT_APP_DIR_PATH
+echo PROJECT_LNINCLUDE_DIR_PATH=$PROJECT_LNINCLUDE_DIR_PATH
+END
+
+
+# Extract location of C++ file w.r.t. the src folder
+# A similar structure will be created in lnInclude and lib directories
+#
+CXX_FILE_LOCATION=${CXX_FILEPATH#*$PROJECT_SRC_DIR_PATH}
+                 # Trim the string before src
+CXX_FILE_LOCATION=$(dirname $CXX_FILE_LOCATION)
+                 # Trim the CXX_FILE
+echo CXX_FILE_LOCATION=$CXX_FILE_LOCATION
+#exit
+
+# Create lnInclude folder
+# This file contains all the symbolic links to the header files
+#
+if [ ! -d "$PROJECT_LNINCLUDE_DIR_PATH" ]
+#
+then
+    echo "The lnInclude folder does not exist"
+    echo "........Creating lnInclude........"
+    mkdir $PROJECT_LNINCLUDE_DIR_PATH
+    echo "created $RELATIVE_PATH_LNINCLUDE_DIR"
+    echo ".................................."
+#
+fi
+
+
+
+#
+# Create required folders in the linked header folders
+# The paths are relative
+#
+HEADER_FILES_PATH=$PROJECT_LNINCLUDE_DIR_PATH$CXX_FILE_LOCATION
+LIB_FILES_PATH=$PROJECT_LNINCLUDE_DIR_PATH$CXX_FILE_LOCATION
+echo HEADER_FILES_PATH=$HEADER_FILES_PATH
+echo LIB_FILES_PATH=$LIB_FILES_PATH
+
+
+
+#
+# Create the folder tree as in src in linked header folder
+# This file would eventually contain all the symbolic links to the header files in src folder
+#
+if [ ! -d "$HEADER_FILES_PATH" ]
+#
+then
+    mkdir -p "$HEADER_FILES_PATH"
+    echo "created $HEADER_FILES_PATH"
+    echo ".................................."
+#
+fi
+echo "created $HEADER_FILES_PATH"
+echo "I reached here"
+
+#
+# Create the folder tree as in src in lib folder
+# This file would eventually contain all the libraries generated
+#
+if [ ! -d "$LIB_FILES_PATH" ]
+#
+then
+    mkdir -p "$LIB_FILES_PATH"
+    echo "created $LIB_FILES_PATH"
+    #echo ".................................."
+#
+fi
+#echo "created $LIB_FILES_PATH"
+
+echo
+#exit
+#
+# Create links to all header files in the current folder
+# To create or update a symlink:
+# ln -sf /path/to/file /path/to/symlink
+#
+#HEADER_FILES_PATH=$RELATIVE_PATH_SRC_DIR$CXX_FILE_LOCATION
+#echo HEADER_FILE_LOCATION=$HEADER_FILE_PATH
+for H in `find . -name "*.H"`;  do
+ H=${H#"./"}
+ H="$(basename "${H}")" # Make sure that we take only the file.H
+                        # even if the argument $1 is a path
+  #echo "${H}"
+  if [ ! -f "$HEADER_FILES_PATH/$H" ]
+  then
+  echo "creating symbolic link to header file at - $HEADER_FILES_PATH/$H"
+  ln -sf $HEADER_FILE_LOCATION/$H $HEADER_FILES_PATH/$H
+  echo "----------------------------"
+  fi
+done
+
+
+exit
+#compile the CXX file
+
+
+#CXX_FILE_NO_EXT=${CXX_FILE%".C"} # remove the file extension
+echo CXX_FILE_NO_EXT=$CXX_FILE_NO_EXT
+
+build_DIR=$ABSOLUTE_PATH_PROJECT_DIR/build # define a build directory for temporary object files
+
+
+if [ ! -d "$build_DIR" ]
+#
+then
+    mkdir -p "$build_DIR"
+    #echo "created $build_DIR"
+    #echo ".................................."
+#
+fi
+
+g++ --std=c++11 -c $CXX_FILE -o $build_DIR/$CXX_FILE_NO_EXT.o
+
+
+## Create the archive (insert the lib prefix)
+#EX: ar rcs libunuseful.a unuseful.o
+ar rcs $LIB_FILES_PATH/lib$CXX_FILE_NO_EXT.a $build_DIR/$CXX_FILE_NO_EXT.o
+
+rm -r $build_DIR
+
+#######START: DO NOT REMOVE######
+##
+##Check if the "CXX" to be compiled is specified
+##Throw error and exit if it is not specified
+##
+#if [ -n "$CXX_FILE"  ]
+#then
+#CXX_FILE_PATH=$(realpath "$CXX_FILE")
+#echo $CXX_FILE_PATH
+##echo $(realpath "$2")
+#else
+#echo "ERROR: /!\ No file specified. Compilation Aborted /!\ "
+#exit 9999 # die with error code 9999
+#fi
+#
+#
+#
+#
+##
+## Extract the path to wmake Directory
+## All the paths are extracted/created w.r.t. this Directory
+##
+#WMAKE_FILE=$(basename -- "$0") #filename
+#ABSOLUTE_PATH_WMAKE_DIR=$(dirname -- "$0") #absolute path to the directory of wmake file
+
+##
+## Extract the PROJECT Directory
+##PROJECT_DIR=$($ABSOLUTE_PATH_WMAKE_DIR | awk -F\/ '{ print $(NF-1) }')
+##
+#PROJECT_DIR=$((dirname -- "$0") | awk -F\/ '{ print $(NF-1) }')
+##echo $PROJECT_DIR
+
+
+
+:<<'END'
+#
+# Get the path to create the required directories in the linked header files folder
+#
+RELATIVE_PATH_DEPTH=${CXX_FILE_PATH#"$ABSOLUTE_PATH_PROJECT_SRC_DIR"}
+#echo RELATIVE_PATH_DEPTH=$RELATIVE_PATH_DEPTH
+                                        #This gives the entire path of the C file
+                                        #The next step is grab the C file and the
+                                        #path of the directory
+                                        #that contains the C file
+#CXX_FILENAME="$(basename "${RELATIVE_PATH_DEPTH}")"
+RELATIVE_PATH_DEPTH="$(dirname "${RELATIVE_PATH_DEPTH}")"
+                                        #This is the path without C file
+#"$(dirname "${VAR}")"
+#echo RELATIVE_PATH_DEPTH=$RELATIVE_PATH_DEPTH
+
+#echo $ABSOLUTE_PATH_PROJECT_SRC_DIR
+
+#Extract the filename from the path
+RELATIVE_PATH_DEPTH=${RELATIVE_PATH_DEPTH%"/$1"} #Remove the slash after the folder name
+#PATH_DEPTH=${PATH_DEPTH#"/"} #Remove the slash before the folder name
+                              #/!\Do not uncomment/!\
+                              #uncommenting would change the behaviour of the file
+# Absolute path of the directories to be created in linked header files folder
+ABSOLUTE_PATH_CURRENT_DIR=$ABSOLUTE_PATH_PROJECT_SRC_DIR$RELATIVE_PATH_DEPTH
+
+#echo $ABSOLUTE_PATH_CURRENT_DIR
+END
+#######END: DO NOT REMOVE######
+
+#-------------------DO NOT REFER--------------------
+#prefix="hell"
+#suffix="ld"
+#string="hello-world"
+#foo=${string#"$prefix"}
+#foo=${foo%"$suffix"}
+#echo "${foo}"
+#

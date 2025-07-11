@@ -1,0 +1,269 @@
+#!/bin/bash
+#This script is used to compile executables
+echo " "
+#echo "ALIAS TO WMAKE FILE OF THE PROJECT: smgmt_wmake"
+echo " "
+
+CXX_FILE="$1" # CXX file to be compiled
+#echo $CXX_FILE
+
+
+#
+#Check if the "CXX" to be compiled is specified
+#Throw error and exit if it is not specified
+#
+if [ -n "$CXX_FILE"  ]
+then
+CXX_FILE_PATH=$(realpath "$1")
+#echo $CXX_FILE_PATH
+#echo $(realpath "$1")
+else
+echo "ERROR: /!\ No file specified. Compilation Aborted /!\ "
+exit 9999 # die with error code 9999
+fi
+
+
+
+
+# Extract the path to wmake Directory
+# All the paths are extracted/created w.r.t. this Directory
+#
+WMAKE_FILE=$(basename -- "$0") #filename
+ABSOLUTE_PATH_WMAKE_DIR=$(dirname -- "$0") #absolute path to the directory of wmake file
+
+#echo $WMAKE_FILE
+#echo ABSOLUTE_PATH_WMAKE_DIR=$ABSOLUTE_PATH_WMAKE_DIR
+
+#
+# Extract the PROJECT Directory
+#PROJECT_DIR=$($ABSOLUTE_PATH_WMAKE_DIR | awk -F\/ '{ print $(NF-1) }')
+#
+PROJECT_DIR=$((dirname -- "$0") | awk -F\/ '{ print $(NF-1) }')
+#echo $PROJECT_DIR
+
+#
+# Construct the relative paths of all directories in the project
+#
+RELATIVE_PATH_LIB_DIR=$PROJECT_DIR/lib
+RELATIVE_PATH_BIN_DIR=$PROJECT_DIR/bin
+RELATIVE_PATH_SRC_DIR=$PROJECT_DIR/src
+RELATIVE_PATH_APP_DIR=$PROJECT_DIR/applications
+RELATIVE_PATH_LNINCLUDE_DIR=$PROJECT_DIR/lnInclude
+
+
+#
+# Construct the absolute paths of all directories in the project
+#
+ABSOLUTE_PATH_PROJECT_DIR=${ABSOLUTE_PATH_WMAKE_DIR%/*} #get absolute path one parent up
+ABSOLUTE_PATH_PROJECT_LIB_DIR=$ABSOLUTE_PATH_PROJECT_DIR/lib
+ABSOLUTE_PATH_PROJECT_BIN_DIR=$ABSOLUTE_PATH_PROJECT_DIR/bin
+ABSOLUTE_PATH_PROJECT_SRC_DIR=($ABSOLUTE_PATH_PROJECT_DIR/src)
+ABSOLUTE_PATH_PROJECT_APP_DIR=$ABSOLUTE_PATH_PROJECT_DIR/applications
+ABSOLUTE_PATH_PROJECT_LNINCLUDE_DIR=$ABSOLUTE_PATH_PROJECT_DIR/lnInclude
+
+#echo ABSOLUTE_PATH_PROJECT_DIR=$ABSOLUTE_PATH_PROJECT_DIR
+#echo ABSOLUTE_PATH_PROJECT_APP_DIR=$ABSOLUTE_PATH_PROJECT_APP_DIR
+#echo $CXX_FILE
+
+#
+# Get the path to create the required directories in the linked header files folder
+#
+RELATIVE_PATH_DEPTH=${CXX_FILE_PATH#"$ABSOLUTE_PATH_PROJECT_APP_DIR/"}
+#echo RELATIVE_PATH_DEPTH=$RELATIVE_PATH_DEPTH
+                                        #This gives the entire path of the C file
+                                        #The next step is grab the C file and the
+                                        #path of the directory
+                                        #that contains the C file
+#CXX_FILENAME="$(basename "${RELATIVE_PATH_DEPTH}")"
+RELATIVE_PATH_DEPTH="$(dirname "${RELATIVE_PATH_DEPTH}")"
+                                        #This is the path without C file
+
+echo RELATIVE_PATH_DEPTH=$RELATIVE_PATH_DEPTH
+#echo $ABSOLUTE_PATH_PROJECT_SRC_DIR
+
+
+#Extract the filename from the path
+RELATIVE_PATH_DEPTH=${RELATIVE_PATH_DEPTH%"/$1"} #Remove the slash after the folder name
+#PATH_DEPTH=${PATH_DEPTH#"/"} #Remove the slash before the folder name
+                              #/!\Do not uncomment/!\
+                              #uncommenting would change the behaviour of the file
+# Absolute path of the directories to be created in linked header files folder
+ABSOLUTE_PATH_CURRENT_DIR=$ABSOLUTE_PATH_PROJECT_SRC_DIR$RELATIVE_PATH_DEPTH
+
+#echo $ABSOLUTE_PATH_CURRENT_DIR
+
+
+CXX_FILENAME="$(basename "${CXX_FILE}")"
+#echo $CXX_FILENAME
+
+CXX_FILE_NO_EXT=${CXX_FILENAME%%.*} # remove the file extension
+#echo CXX_FILE_NO_EXT=$CXX_FILE_NO_EXT
+
+exit 0
+
+###############################################################################
+#
+# Extract the path to wmake Directory
+# All the paths are extracted/created w.r.t. this Directory
+#
+WMAKE_FILE=$(basename -- "$0") #filename
+ABSOLUTE_PATH_WMAKE_DIR=$(dirname -- "$0") #absolute path to the directory of wmake file
+
+#
+# Extract the PROJECT Directory
+#PROJECT_DIR=$($ABSOLUTE_PATH_WMAKE_DIR | awk -F\/ '{ print $(NF-1) }')
+#
+PROJECT_DIR=$((dirname -- "$0") | awk -F\/ '{ print $(NF-1) }')
+#echo $PROJECT_DIR
+
+#
+# Construct the relative paths of all directories in the project
+#
+RELATIVE_PATH_LIB_DIR=$PROJECT_DIR/lib
+RELATIVE_PATH_BIN_DIR=$PROJECT_DIR/bin
+RELATIVE_PATH_SRC_DIR=$PROJECT_DIR/src
+RELATIVE_PATH_APP_DIR=$PROJECT_DIR/applications
+RELATIVE_PATH_LNINCLUDE_DIR=$PROJECT_DIR/lnInclude
+
+
+#
+# Construct the absolute paths of all directories in the project
+#
+ABSOLUTE_PATH_PROJECT_DIR=${ABSOLUTE_PATH_WMAKE_DIR%$WMAKE_FILE}
+ABSOLUTE_PATH_PROJECT_LIB_DIR=$ABSOLUTE_PATH_PROJECT_DIR/lib
+ABSOLUTE_PATH_PROJECT_BIN_DIR=$ABSOLUTE_PATH_PROJECT_DIR/bin
+ABSOLUTE_PATH_PROJECT_SRC_DIR=($ABSOLUTE_PATH_PROJECT_DIR/src)
+ABSOLUTE_PATH_PROJECT_APP_DIR=$ABSOLUTE_PATH_PROJECT_DIR/applications
+ABSOLUTE_PATH_PROJECT_LNINCLUDE_DIR=$ABSOLUTE_PATH_PROJECT_DIR/lnInclude
+
+#
+# Get the path to create the required directories in the linked header files folder
+#
+RELATIVE_PATH_DEPTH=${CXX_FILE_PATH#"$ABSOLUTE_PATH_PROJECT_SRC_DIR"}
+#echo RELATIVE_PATH_DEPTH=$RELATIVE_PATH_DEPTH
+                                        #This gives the entire path of the C file
+                                        #The next step is grab the C file and the
+                                        #path of the directory
+                                        #that contains the C file
+CXX_FILENAME="$(basename "${RELATIVE_PATH_DEPTH}")"
+RELATIVE_PATH_DEPTH="$(dirname "${RELATIVE_PATH_DEPTH}")"
+                                        #This is the path without C file
+#"$(dirname "${VAR}")"
+#echo RELATIVE_PATH_DEPTH=$RELATIVE_PATH_DEPTH
+
+#echo $ABSOLUTE_PATH_PROJECT_SRC_DIR
+
+#Extract the filename from the path
+RELATIVE_PATH_DEPTH=${RELATIVE_PATH_DEPTH%"/$1"} #Remove the slash after the folder name
+#PATH_DEPTH=${PATH_DEPTH#"/"} #Remove the slash before the folder name
+                              #/!\Do not uncomment/!\
+                              #uncommenting would change the behaviour of the file
+# Absolute path of the directories to be created in linked header files folder
+ABSOLUTE_PATH_CURRENT_DIR=$ABSOLUTE_PATH_PROJECT_SRC_DIR$RELATIVE_PATH_DEPTH
+
+#echo $ABSOLUTE_PATH_CURRENT_DIR
+
+#
+# Create lnInclude folder
+# This file contains all the symbolic links to the header files
+#
+if [ ! -d "$ABSOLUTE_PATH_PROJECT_LNINCLUDE_DIR" ]
+#
+then
+    echo "The lnInclude folder does not exist"
+    echo "........Creating lnInclude........"
+    mkdir $ABSOLUTE_PATH_PROJECT_LNINCLUDE_DIR
+    echo "created $RELATIVE_PATH_LNINCLUDE_DIR"
+    echo ".................................."
+#
+fi
+#
+
+#
+# Create required folders in the linked header folders
+#
+HEADER_FILES_PATH=$ABSOLUTE_PATH_PROJECT_LNINCLUDE_DIR$RELATIVE_PATH_DEPTH
+#echo $HEADER_FILES_PATH
+LIB_FILES_PATH=$ABSOLUTE_PATH_PROJECT_LIB_DIR$RELATIVE_PATH_DEPTH
+#echo $LIB_FILES_PATH
+
+
+#
+# Create the folder tree as in src in linked header folder
+# This file would eventually contain all the symbolic links to the header files in src folder
+#
+if [ ! -d "$HEADER_FILES_PATH" ]
+#
+then
+    mkdir -p "$HEADER_FILES_PATH"
+    echo "created $HEADER_FILES_PATH"
+    echo ".................................."
+#
+fi
+#echo "created $HEADER_FILES_PATH"
+
+#
+# Create the folder tree as in src in lib folder
+# This file would eventually contain all the libraries generated
+#
+if [ ! -d "$LIB_FILES_PATH" ]
+#
+then
+    mkdir -p "$LIB_FILES_PATH"
+    echo "created $LIB_FILES_PATH"
+    #echo ".................................."
+#
+fi
+#echo "created $LIB_FILES_PATH"
+
+#
+# Create links to all header files in the current folder
+#
+for H in `find . -name "*.H"`;  do
+ H=${H#"./"}
+ H="$(basename "${H}")" # Make sure that we take only the file.H
+                        # even if the argument $1 is a path
+  #echo "${H}"
+  if [ ! -f "$HEADER_FILES_PATH/$H" ]
+  then
+  echo "creating file - $HEADER_FILES_PATH/$H"
+  ln -s $ABSOLUTE_PATH_CURRENT_DIR/$H $HEADER_FILES_PATH/$H
+  echo "----------------------------"
+  fi
+done
+
+#compile the CXX file
+
+CXX_FILE_NO_EXT=${CXX_FILENAME%%.*} # remove the file extension
+#CXX_FILE_NO_EXT=${CXX_FILE%".C"} # remove the file extension
+echo CXX_FILE_NO_EXT=$CXX_FILE_NO_EXT
+
+build_DIR=$ABSOLUTE_PATH_PROJECT_DIR/build # define a build directory for temporary object files
+
+
+if [ ! -d "$build_DIR" ]
+#
+then
+    mkdir -p "$build_DIR"
+    #echo "created $build_DIR"
+    #echo ".................................."
+#
+fi
+
+g++ --std=c++11 -c $CXX_FILE -o $build_DIR/$CXX_FILE_NO_EXT.o
+
+
+## Create the archive (insert the lib prefix)
+#EX: ar rcs libunuseful.a unuseful.o
+ar rcs $LIB_FILES_PATH/lib$CXX_FILE_NO_EXT.a $build_DIR/$CXX_FILE_NO_EXT.o
+
+rm -r $build_DIR
+
+#-------------------DO NOT REFER--------------------
+#prefix="hell"
+#suffix="ld"
+#string="hello-world"
+#foo=${string#"$prefix"}
+#foo=${foo%"$suffix"}
+#echo "${foo}"
+#
