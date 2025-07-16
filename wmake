@@ -1,6 +1,8 @@
 #!/bin/bash
 #
 #This script is used to compile the libraries
+# Aboslute paths are denoted by APATH
+# Relative paths are denoted by RPATH
 #
 echo "Loading script wmake"
 echo " "
@@ -15,6 +17,22 @@ echo " "
 #
 FILE_EXT=("c" "C" "cpp" "CPP" "cxx" "CXX") 
 
+
+#
+# Check: Arguments required 2 (two)
+#        argument 1: Project Directory (name of the folder)
+#        argument 2: CPP file to compile
+#
+if [ "$#" -ne 2 ];
+then
+    echo "ERROR(9001): Illegal number of parameters"
+    echo 'INFO       : Compile command: wmake $PROJECT_NAME $FILE_NAME_TO_BE_COMPLIED'
+#echo '      Else export the file name using following command'
+#echo 'export $PROJECT_NAME'
+    exit 9001
+fi
+
+
 # Data extracted from the arguments (if any)
 # Further checks will be performed for each error case
 # Expected number of arguments: 2 (two)
@@ -25,29 +43,29 @@ PROJECT_DIR="$1"
 # The path/name of the file to be compiled (second argument)
 # The path would depend where the script is executed
 #
-CXX_FILE="$2" # CXX file to be compiled
+CXXFILE="$2" # CXX file to be compiled
+
+
+# Extract the name of the file to compile if the argument
+# contains path to the file to compile
+#
+CXXFILENAME="$(basename "$CXXFILE")"
+
+# File name without extension
+#
+CXXFILE_NOEXT=${CXXFILENAME%%.*}
+
+# File extension: will be used to check whether the argument is a CPP file
+#
+CXXFILE_EXT="${CXXFILENAME##*.}" # get the file extension
+
+#CXXFILE_ABSOLUTE=$( dirname "${CXXFILE_PATH}" )
+#echo CXXFILE_ABSOLUTE=$CXXFILE_ABSOLUTE
 
 # Extract the absolute filepath of the file to compile
 #
-CXX_FILEPATH=$(realpath "$CXX_FILE")
-echo 'CXX_FILE_PATH='$CXX_FILEPATH
-
-
-#
-# Check: Arguments required 2 (two)
-#        argument 1: Project Directory (name of the folder)
-#        argument 2: CPP file to compile
-#
-if [ "$#" -ne 2 ]; 
-then 
-    echo "ERROR(9001): Illegal number of parameters"
-    echo 'INFO       : Compile command: wmake $PROJECT_NAME $FILE_NAME_TO_BE_COMPLIED'
-#echo '      Else export the file name using following command'
-#echo 'export $PROJECT_NAME'
-    exit 9001
-fi
-
-
+CXXFILE=$(realpath "$CXXFILE")
+#echo 'CXXFILE_PATH='$CXXFILE
 
 #
 # Check: Existence of project directory
@@ -55,9 +73,9 @@ fi
 #        argument 2: CPP file to compile
 #        Use of expression matching operator (=~):
 #	 Check that the substring $PROJECT_DIR is present
-#        in the path CXX_FILEPATH
+#        in the path CXXFILE
 #
-if [[ ! $CXX_FILEPATH =~ /${PROJECT_DIR}/ ]]; 
+if [[ ! $CXXFILE =~ /${PROJECT_DIR}/ ]];
 then
     echo "ERROR(9002):Project directory "$PROJECT_DIR" not found"
     echo 'INFO       : Check project directory name '
@@ -71,35 +89,12 @@ fi
 #        argument 1: Project Directory (name of the folder)
 #        argument 2: CPP file to compile
 #
-if [ ! -O "$CXX_FILE" ]; 
+if [ ! -O "$CXXFILE" ];
 then
     echo "ERROR(9003): File to compile ${2} not found"
     echo 'INFO       : Check filepath '
     exit 9003
 fi 
-
-
-
-# Construct: Construction of Project Dir Path
-#            Extract substring upto project name
-#            Append the extracted string with project name
-#
-PROJECT_DIR_PATH=${CXX_FILEPATH%$PROJECT_DIR*}$PROJECT_DIR
-
-
-
-# Extract the name of the file to compile if the argument 
-# contains path to the file to compile
-#
-CXX_FILENAME="$(basename "$CXX_FILE")"
-
-# File name without extension
-#
-CXX_FILE_NO_EXT=${CXX_FILENAME%%.*}
-
-# File extension: will be used to check whether the argument is a CPP file
-#
-CXX_FILE_EXT="${CXX_FILENAME##*.}" # get the file extension
 
 
 
@@ -110,7 +105,7 @@ CXX_FILE_EXT="${CXX_FILENAME##*.}" # get the file extension
 #        Check is done by checking the file extesnsion
 #        against each element of the array FILE_EXT
 #
-if [[ ! " ${FILE_EXT[*]} " =~  ${CXX_FILE_EXT}  ]]; then
+if [[ ! " ${FILE_EXT[*]} " =~  ${CXXFILE_EXT}  ]]; then
 echo 'ERROR: The file to compile is not a C++ file'
 echo 'INFO:  Check order of the arguments'
 echo '       Compile command: wmake $PROJECT_NAME $FILE_NAME_TO_BE_COMPLIED'
@@ -121,85 +116,89 @@ fi
 :<<'END'
 # Verification: Check the values assigned to the variables
 echo 'PROJECT_DIR='$PROJECT_DIR
-echo 'CXX_FILE='$CXX_FILE
-echo 'CXX_FILE_PATH='$CXX_FILEPATH
-echo 'CXX_FILENAME='$CXX_FILENAME
-echo 'CXX_FILE_NO_EXT='$CXX_FILE_NO_EXT
-echo 'CXX_FILE_EXT='$CXX_FILE_EXT
-echo 'PROJECT_DIR_PATH'=$PROJECT_DIR_PATH
+echo 'CXXFILE='$CXXFILE
+echo 'CXXFILE_PATH='$CXXFILE
+echo 'CXXFILENAME='$CXXFILENAME
+echo 'CXXFILE_NOEXT='$CXXFILE_NOEXT
+echo 'CXXFILE_EXT='$CXXFILE_EXT
+echo 'PROJECT_DIR'=$PROJECT_DIR
 END
+
+# Construct: Construction of Project Dir Path
+#            Extract substring upto project name
+#            Append the extracted string with project name
+#
+PROJECT_DIR=${CXXFILE%$PROJECT_DIR*}$PROJECT_DIR
+echo PROJECT_DIR=$PROJECT_DIR
+
 
 #
 # Construct the relative paths of all directories in the project
 #
-RELATIVE_PATH_LIB_DIR=$PROJECT_DIR/lib
-RELATIVE_PATH_BIN_DIR=$PROJECT_DIR/bin
-RELATIVE_PATH_SRC_DIR=$PROJECT_DIR/src
-RELATIVE_PATH_APP_DIR=$PROJECT_DIR/applications
-RELATIVE_PATH_LNINCLUDE_DIR=$PROJECT_DIR/lnInclude
+LIB_DIR_RPATH=$PROJECT_DIR/lib
+BIN_DIR_RPATH=$PROJECT_DIR/bin
+SRC_DIR_RPATH=$PROJECT_DIR/src
+APP_DIR_RPATH=$PROJECT_DIR/applications
+LNINCLUDE_DIR_RPATH=$PROJECT_DIR/lnInclude
 
 
 #
 # Construct the absolute paths of all directories in the project
 #
-PROJECT_LIB_DIR_PATH=$PROJECT_DIR_PATH/lib
-PROJECT_BIN_DIR_PATH=$PROJECT_DIR_PATH/bin
-PROJECT_SRC_DIR_PATH=$PROJECT_DIR_PATH/src
-PROJECT_APP_DIR_PATH=$PROJECT_DIR_PATH/applications
-PROJECT_LNINCLUDE_DIR_PATH=$PROJECT_DIR_PATH/lnInclude
+LIB_DIR=$PROJECT_DIR/lib
+BIN_DIR=$PROJECT_DIR/bin
+SRC_DIR=$PROJECT_DIR/src
+APP_DIR=$PROJECT_DIR/applications
+LNINCLUDE_DIR=$PROJECT_DIR/lnInclude
 
 
 
 :<<'END'
-echo RELATIVE_PATH_LIB_DIR=$RELATIVE_PATH_LIB_DIR
-echo RELATIVE_PATH_BIN_DIR=$RELATIVE_PATH_BIN_DIR
-echo RELATIVE_PATH_SRC_DIR=$RELATIVE_PATH_SRC_DIR
-echo RELATIVE_PATH_APP_DIR=$RELATIVE_PATH_APP_DIR
-echo RELATIVE_PATH_LNINCLUDE_DIR=$RELATIVE_PATH_LNINCLUDE_DIR
-
-
-echo PROJECT_LIB_DIR_PATH=$PROJECT_LIB_DIR_PATH
-echo PROJECT_BIN_DIR_PATH=$PROJECT_BIN_DIR_PATH
-echo PROJECT_SRC_DIR_PATH=$PROJECT_SRC_DIR_PATH
-echo PROJECT_APP_DIR_PATH=$PROJECT_APP_DIR_PATH
-echo PROJECT_LNINCLUDE_DIR_PATH=$PROJECT_LNINCLUDE_DIR_PATH
+echo LIB_DIR=$LIB_DIR
+echo BIN_DIR=$BIN_DIR
+echo SRC_DIR=$SRC_DIR
+echo APP_DIR=$APP_DIR
+echo LNINCLUDE_DIR=$LNINCLUDE_DIR
 END
 
 
-# Extract location of C++ file w.r.t. the src folder
+# Extract path of the directory that contains the C++ file w.r.t. the src folder
 # A similar structure will be created in lnInclude and lib directories
 #
-CXX_FILE_LOCATION=${CXX_FILEPATH#*$PROJECT_SRC_DIR_PATH}
+CXXFILE_DIR=$(dirname $CXXFILE)
+                 # Get the directory path that contains C++ file
+CXXFILE_DEPTH=${CXXFILE_DIR#*$SRC_DIR}
                  # Trim the string before src
-CXX_FILE_LOCATION=$(dirname $CXX_FILE_LOCATION)
-                 # Trim the CXX_FILE
-echo CXX_FILE_LOCATION=$CXX_FILE_LOCATION
-#exit
+
+echo CXXFILE=$CXXFILE
+echo CXXFILE_DIR=$CXXFILE_DIR
+echo CXXFILE_DEPTH=$CXXFILE_DEPTH
+
 
 # Create lnInclude folder
 # This file contains all the symbolic links to the header files
 #
-if [ ! -d "$PROJECT_LNINCLUDE_DIR_PATH" ]
+if [ ! -d "$LNINCLUDE_DIR" ]
 #
 then
     echo "The lnInclude folder does not exist"
     echo "........Creating lnInclude........"
-    mkdir $PROJECT_LNINCLUDE_DIR_PATH
-    echo "created $RELATIVE_PATH_LNINCLUDE_DIR"
+    mkdir $LNINCLUDE_DIR
+    echo "created lnInclude folder: $LNINCLUDE_DIR"
     echo ".................................."
 #
 fi
 
 
-
+:<<'END'
 #
 # Create required folders in the linked header folders
 # The paths are relative
 #
-HEADER_FILES_PATH=$PROJECT_LNINCLUDE_DIR_PATH$CXX_FILE_LOCATION
-LIB_FILES_PATH=$PROJECT_LNINCLUDE_DIR_PATH$CXX_FILE_LOCATION
-echo HEADER_FILES_PATH=$HEADER_FILES_PATH
-echo LIB_FILES_PATH=$LIB_FILES_PATH
+HEADER_FILES_PATH=$PROJECT_LNINCLUDE_DIR_PATH$CXXFILE_LOCATION
+LIB_FILES_PATH=$PROJECT_LIB_DIR_PATH$CXXFILE_LOCATION
+#echo HEADER_FILES_PATH=$HEADER_FILES_PATH
+#echo LIB_FILES_PATH=$LIB_FILES_PATH
 
 
 
@@ -211,12 +210,10 @@ if [ ! -d "$HEADER_FILES_PATH" ]
 #
 then
     mkdir -p "$HEADER_FILES_PATH"
-    echo "created $HEADER_FILES_PATH"
+    echo "created header links path: $HEADER_FILES_PATH"
     echo ".................................."
 #
 fi
-echo "created $HEADER_FILES_PATH"
-echo "I reached here"
 
 #
 # Create the folder tree as in src in lib folder
@@ -226,41 +223,51 @@ if [ ! -d "$LIB_FILES_PATH" ]
 #
 then
     mkdir -p "$LIB_FILES_PATH"
-    echo "created $LIB_FILES_PATH"
+    echo "created lib files path: $LIB_FILES_PATH"
     #echo ".................................."
 #
 fi
 #echo "created $LIB_FILES_PATH"
+END
 
-echo
-#exit
 #
 # Create links to all header files in the current folder
+# Note that all the header files must be in same location as C++ files
 # To create or update a symlink:
 # ln -sf /path/to/file /path/to/symlink
 #
-#HEADER_FILES_PATH=$RELATIVE_PATH_SRC_DIR$CXX_FILE_LOCATION
+#HEADER_FILES_PATH=$SRC_DIR$CXXFILE_LOCATION
+#echo CXXFILE_LOCATION=$CXXFILE_LOCATION
 #echo HEADER_FILE_LOCATION=$HEADER_FILE_PATH
-for H in `find . -name "*.H"`;  do
- H=${H#"./"}
+
+#for headerFile in ${CXXFILE_LOCATION}/*; do
+#    echo headerFile=$headerFile
+#done
+
+# Loop over files in CXXFILE_LOCATION and select the header files
+for headerFile in `find ${CXXFILE_DIR}/* -name "*.H"`;  do
+#`find . -name "*.H"`
+ H=${headerFile#"./"}
  H="$(basename "${H}")" # Make sure that we take only the file.H
                         # even if the argument $1 is a path
-  #echo "${H}"
-  if [ ! -f "$HEADER_FILES_PATH/$H" ]
-  then
-  echo "creating symbolic link to header file at - $HEADER_FILES_PATH/$H"
-  ln -sf $HEADER_FILE_LOCATION/$H $HEADER_FILES_PATH/$H
-  echo "----------------------------"
-  fi
+  echo headerFile="$headerFile"
+  echo H=$H
+  #if [ ! -f "$HEADER_FILES_PATH/$H" ]
+  #then
+  #echo "creating symbolic link to header file at - $HEADER_FILES_PATH/$H"
+  #ln -sf $HEADER_FILE_LOCATION/$H $HEADER_FILES_PATH/$H
+  #echo "----------------------------"
+  #fi
 done
 
 
+echo "I reached here"
 exit
 #compile the CXX file
 
 
-#CXX_FILE_NO_EXT=${CXX_FILE%".C"} # remove the file extension
-echo CXX_FILE_NO_EXT=$CXX_FILE_NO_EXT
+#CXXFILE_NOEXT=${CXXFILE%".C"} # remove the file extension
+echo CXXFILE_NOEXT=$CXXFILE_NOEXT
 
 build_DIR=$ABSOLUTE_PATH_PROJECT_DIR/build # define a build directory for temporary object files
 
@@ -274,12 +281,12 @@ then
 #
 fi
 
-g++ --std=c++11 -c $CXX_FILE -o $build_DIR/$CXX_FILE_NO_EXT.o
+g++ --std=c++11 -c $CXXFILE -o $build_DIR/$CXXFILE_NOEXT.o
 
 
 ## Create the archive (insert the lib prefix)
 #EX: ar rcs libunuseful.a unuseful.o
-ar rcs $LIB_FILES_PATH/lib$CXX_FILE_NO_EXT.a $build_DIR/$CXX_FILE_NO_EXT.o
+ar rcs $LIB_FILES_PATH/lib$CXXFILE_NOEXT.a $build_DIR/$CXXFILE_NOEXT.o
 
 rm -r $build_DIR
 
@@ -288,10 +295,10 @@ rm -r $build_DIR
 ##Check if the "CXX" to be compiled is specified
 ##Throw error and exit if it is not specified
 ##
-#if [ -n "$CXX_FILE"  ]
+#if [ -n "$CXXFILE"  ]
 #then
-#CXX_FILE_PATH=$(realpath "$CXX_FILE")
-#echo $CXX_FILE_PATH
+#CXXFILE_PATH=$(realpath "$CXXFILE")
+#echo $CXXFILE_PATH
 ##echo $(realpath "$2")
 #else
 #echo "ERROR: /!\ No file specified. Compilation Aborted /!\ "
@@ -321,27 +328,27 @@ rm -r $build_DIR
 #
 # Get the path to create the required directories in the linked header files folder
 #
-RELATIVE_PATH_DEPTH=${CXX_FILE_PATH#"$ABSOLUTE_PATH_PROJECT_SRC_DIR"}
-#echo RELATIVE_PATH_DEPTH=$RELATIVE_PATH_DEPTH
+DEPTH=${CXXFILE_PATH#"$ABSOLUTE_PATH_PROJECT_SRC_DIR"}
+#echo DEPTH=$DEPTH
                                         #This gives the entire path of the C file
                                         #The next step is grab the C file and the
                                         #path of the directory
                                         #that contains the C file
-#CXX_FILENAME="$(basename "${RELATIVE_PATH_DEPTH}")"
-RELATIVE_PATH_DEPTH="$(dirname "${RELATIVE_PATH_DEPTH}")"
+#CXXFILENAME="$(basename "${DEPTH}")"
+DEPTH="$(dirname "${DEPTH}")"
                                         #This is the path without C file
 #"$(dirname "${VAR}")"
-#echo RELATIVE_PATH_DEPTH=$RELATIVE_PATH_DEPTH
+#echo DEPTH=$DEPTH
 
 #echo $ABSOLUTE_PATH_PROJECT_SRC_DIR
 
 #Extract the filename from the path
-RELATIVE_PATH_DEPTH=${RELATIVE_PATH_DEPTH%"/$1"} #Remove the slash after the folder name
+DEPTH=${DEPTH%"/$1"} #Remove the slash after the folder name
 #PATH_DEPTH=${PATH_DEPTH#"/"} #Remove the slash before the folder name
                               #/!\Do not uncomment/!\
                               #uncommenting would change the behaviour of the file
 # Absolute path of the directories to be created in linked header files folder
-ABSOLUTE_PATH_CURRENT_DIR=$ABSOLUTE_PATH_PROJECT_SRC_DIR$RELATIVE_PATH_DEPTH
+ABSOLUTE_PATH_CURRENT_DIR=$ABSOLUTE_PATH_PROJECT_SRC_DIR$DEPTH
 
 #echo $ABSOLUTE_PATH_CURRENT_DIR
 END
