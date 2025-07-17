@@ -4,9 +4,8 @@
 # Aboslute paths are denoted by APATH
 # Relative paths are denoted by RPATH
 #
-echo "Loading script wmake"
+echo "Loading compile script"
 echo " "
-#echo "ALIAS TO WMAKE FILE OF THE PROJECT: smgmt_wcompile"
 #echo " "
 
 #
@@ -44,48 +43,35 @@ PROJECT_DIR="$1"
 # The path would depend where the script is executed
 #
 CXXFILE="$2" # CXX file to be compiled
+#echo CXXFILE=$CXXFILE
 
+# Extract the absolute filepath of the file to compile
+CXXFILE=$(realpath "$CXXFILE")
+#echo CXXFILE=$CXXFILE
 
 # Extract the name of the file to compile if the argument
 # contains path to the file to compile
-#
-CXXFILENAME="$(basename "$CXXFILE")"
+CXXFILE_NAME="$(basename "$CXXFILE")"
+#echo CXXFILE_NAME=$CXXFILE_NAME
 
 # File name without extension
-#
-CXXFILE_NOEXT=${CXXFILENAME%%.*}
+CXXFILE_NOEXT=${CXXFILE_NAME%%.*}
+            # Remove everything after and including dot (.)
+#echo CXXFILE_NOEXT=$CXXFILE_NOEXT
 
-# File extension: will be used to check whether the argument is a CPP file
-#
-CXXFILE_EXT="${CXXFILENAME##*.}" # get the file extension
+# File extension: will be used to check whether the argument is a C++ file
+#CXXFILE_EXT="${CXXFILE_NAME##*.}" # get the file extension
+CXXFILE_EXT=${CXXFILE_NAME##*.}
+            # Remove everything upto dot (.)
+#echo CXXFILE_EXT=$CXXFILE_EXT
 
-#CXXFILE_ABSOLUTE=$( dirname "${CXXFILE_PATH}" )
-#echo CXXFILE_ABSOLUTE=$CXXFILE_ABSOLUTE
-
-# Extract the absolute filepath of the file to compile
-#
-CXXFILE=$(realpath "$CXXFILE")
-#echo 'CXXFILE_PATH='$CXXFILE
-
-#
-# Check: Existence of project directory
-#        argument 1: Project Directory (name of the folder)
-#        argument 2: CPP file to compile
-#        Use of expression matching operator (=~):
-#	 Check that the substring $PROJECT_DIR is present
-#        in the path CXXFILE
-#
-if [[ ! $CXXFILE =~ /${PROJECT_DIR}/ ]];
-then
-    echo "ERROR(9002):Project directory "$PROJECT_DIR" not found"
-    echo 'INFO       : Check project directory name '
-    exit 9002
-fi
+# Get the directory path that contains C++ file
+CXXFILE_DIR=$(dirname $CXXFILE)
 
 
 
 #
-# Check: Existence of C++ file 
+# Check: Existence of C++ file
 #        argument 1: Project Directory (name of the folder)
 #        argument 2: CPP file to compile
 #
@@ -94,44 +80,51 @@ then
     echo "ERROR(9003): File to compile ${2} not found"
     echo 'INFO       : Check filepath '
     exit 9003
-fi 
-
-
-
+fi
 
 #
-# Check: Verify that the file to be compile has a valid extension
-#        Valid extensions defined in a array FILE_EXT
-#        Check is done by checking the file extesnsion
-#        against each element of the array FILE_EXT
+# Check: Existence of project directory
+#        argument 1: Project Directory (name of the folder)
+#        argument 2: CPP file to compile
+#        Use of expression matching operator (=~):
+#	     Check that the substring /$PROJECT_DIR/ is present
+#        in the path CXXFILE
+#        Adding back slashes (/) before and after the PROJECT_DIR as
+#        expected in CXXFILE_PATH
 #
-if [[ ! " ${FILE_EXT[*]} " =~  ${CXXFILE_EXT}  ]]; then
-echo 'ERROR: The file to compile is not a C++ file'
-echo 'INFO:  Check order of the arguments'
-echo '       Compile command: wmake $PROJECT_NAME $FILE_NAME_TO_BE_COMPLIED'
+if [[ ! $CXXFILE =~ /${PROJECT_DIR}/ ]];
+then
+    echo "ERROR(9002):Project directory "$PROJECT_DIR" not found"
+    echo 'INFO       : (1) Check project directory name '
+    echo '             (2) Directory name must be without any trailing or leading slashes'
+    exit 9002
 fi
 
 
 
-:<<'END'
-# Verification: Check the values assigned to the variables
-echo 'PROJECT_DIR='$PROJECT_DIR
-echo 'CXXFILE='$CXXFILE
-echo 'CXXFILE_PATH='$CXXFILE
-echo 'CXXFILENAME='$CXXFILENAME
-echo 'CXXFILE_NOEXT='$CXXFILE_NOEXT
-echo 'CXXFILE_EXT='$CXXFILE_EXT
-echo 'PROJECT_DIR'=$PROJECT_DIR
-END
+#
+# Check: Verify that the file to be compiled has a valid extension
+#        Valid extensions defined in a array FILE_EXT
+#        Check is done by checking the file extesnsion
+#        against each element of the array FILE_EXT
+#
+if [[ ! " ${FILE_EXT[*]} " =~  ${CXXFILE_EXT}  ]];
+then
+    echo 'ERROR: The file to compile is not a C++ file'
+    echo 'INFO:  Check order of the arguments'
+    echo '       Compile command: wmake $PROJECT_NAME $FILE_NAME_TO_BE_COMPLIED'
+fi
+
+
 
 # Construct: Construction of Project Dir Path
 #            Extract substring upto project name
 #            Append the extracted string with project name
 #
 PROJECT_DIR=${CXXFILE%$PROJECT_DIR*}$PROJECT_DIR
+                    # Remove everything after the substring $PROJECT_DIR
 echo PROJECT_DIR=$PROJECT_DIR
-
-
+:<<END
 #
 # Construct the relative paths of all directories in the project
 #
@@ -140,7 +133,7 @@ BIN_DIR_RPATH=$PROJECT_DIR/bin
 SRC_DIR_RPATH=$PROJECT_DIR/src
 APP_DIR_RPATH=$PROJECT_DIR/applications
 LNINCLUDE_DIR_RPATH=$PROJECT_DIR/lnInclude
-
+END
 
 #
 # Construct the absolute paths of all directories in the project
@@ -162,17 +155,14 @@ echo LNINCLUDE_DIR=$LNINCLUDE_DIR
 END
 
 
+
 # Extract path of the directory that contains the C++ file w.r.t. the src folder
 # A similar structure will be created in lnInclude and lib directories
 #
-CXXFILE_DIR=$(dirname $CXXFILE)
-                 # Get the directory path that contains C++ file
 CXXFILE_DEPTH=${CXXFILE_DIR#*$SRC_DIR}
-                 # Trim the string before src
+                 # Trim the string before and including src
+#echo CXXFILE_DEPTH=$CXXFILE_DEPTH
 
-echo CXXFILE=$CXXFILE
-echo CXXFILE_DIR=$CXXFILE_DIR
-echo CXXFILE_DEPTH=$CXXFILE_DEPTH
 
 
 # Create lnInclude folder
@@ -189,6 +179,127 @@ then
 #
 fi
 
+
+
+# Create folders to store symbolic links
+# The folder structure would be the same as the header file in src folder
+#
+if [ ! -d "$LNINCLUDE_DIR$CXXFILE_DEPTH" ]
+#
+then
+    echo "The ymbolic link folder structure does not exist"
+    echo "........Creating ymbolic link folder structure........"
+    mkdir $LNINCLUDE_DIR$CXXFILE_DEPTH
+    echo "created symbolic link folder structure: $LNINCLUDE_DIR$CXXFILE_DEPTH"
+    echo ".................................."
+#
+fi
+
+
+
+#
+# Create links to all header files in the current folder
+# Note that all the header files must be in same location as C++ files
+# To create or update a symlink:
+# ln -sf /path/to/file /path/to/symlink
+#
+# Loop over files in CXXFILE_DIR and select the header files
+#
+for HEADERFILE in `find ${CXXFILE_DIR}/* -name "*.H"`;  do
+    HEADERFILE_NAME="$(basename "$HEADERFILE")"
+    #echo HEADERFILE_NAME="$HEADERFILE_NAME"
+    SYMLINK=$LNINCLUDE_DIR$CXXFILE_DEPTH/$HEADERFILE_NAME
+    if [ ! -f "$SYMLINK" ]
+        then
+        echo "creating symbolic link to header file"
+        echo $HEADERFILE
+        echo "at - $SYMLINK"
+        ln -sf $HEADERFILE $SYMLINK
+        echo "----------------------------"
+    fi
+done
+
+
+
+# Create LIB folder
+# This file contains all the libraries that will be compiled
+#
+if [ ! -d "$LIB_DIR" ]
+#
+then
+    echo "The folder for libraries does not exist"
+    echo "........Creating LIB........"
+    mkdir $LIB_DIR
+    echo "created LIB folder: $LIB_DIR"
+    echo ".................................."
+#
+fi
+
+
+
+# Create foldes in LIB_DIR for libraries
+# Folder structure would be as in the src folder
+LIB_PATH=$LIB_DIR$CXXFILE_DEPTH
+echo $LIB_PATH
+if [ ! -d "$LIB_PATH" ]
+#
+then
+    echo "The folder(s) for libraries does not exist"
+    echo "........Creating folder structure........"
+    mkdir $LIB_PATH
+    echo "created LIB folder structure: $LIB_PATH"
+    echo ".................................."
+#
+fi
+
+
+
+#compile the CXX file
+
+
+#CXXFILE_NOEXT=${CXXFILE%".C"} # remove the file extension
+#echo CXXFILE_NOEXT=$CXXFILE_NOEXT
+# define a build directory for temporary object files
+BUILD_DIR=$PROJECT_DIR/build
+echo BUILD_DIR=$BUILD_DIR
+
+
+if [ ! -d "$BUILD_DIR" ]
+#
+then
+    mkdir -p "$BUILD_DIR"
+    #echo "created $build_DIR"
+    #echo ".................................."
+#
+fi
+
+# Create foldes in LIB_DIR for libraries
+# Folder structure would be as in the src folder
+BUILD_PATH=$BUILD_DIR$CXXFILE_DEPTH
+echo BUILD_PATH=$BUILD_PATH
+if [ ! -d "$BUILD_PATH" ]
+#
+then
+    echo "The folder(s) in build directory for object files does not exist"
+    echo "........Creating folder structure........"
+    mkdir $BUILD_PATH
+    echo "created build folder structure: $BUILD_PATH"
+    echo ".................................."
+#
+fi
+
+g++ --std=c++11 -c $CXXFILE -o $BUILD_PATH/$CXXFILE_NOEXT.o
+
+
+
+# Create the archive (insert the lib prefix)
+#EX: ar rcs libunuseful.a unuseful.o
+ar rcs $LIB_PATH/lib$CXXFILE_NOEXT.a $BUILD_PATH/$CXXFILE_NOEXT.o
+
+echo "File \"$CXXFILE_NAME\" compiled successfully"
+exit 0
+#######START: DO NOT REMOVE######
+#rm -r $BUILD_DIR
 
 :<<'END'
 #
@@ -230,67 +341,10 @@ fi
 #echo "created $LIB_FILES_PATH"
 END
 
-#
-# Create links to all header files in the current folder
-# Note that all the header files must be in same location as C++ files
-# To create or update a symlink:
-# ln -sf /path/to/file /path/to/symlink
-#
-#HEADER_FILES_PATH=$SRC_DIR$CXXFILE_LOCATION
-#echo CXXFILE_LOCATION=$CXXFILE_LOCATION
-#echo HEADER_FILE_LOCATION=$HEADER_FILE_PATH
-
-#for headerFile in ${CXXFILE_LOCATION}/*; do
-#    echo headerFile=$headerFile
-#done
-
-# Loop over files in CXXFILE_LOCATION and select the header files
-for headerFile in `find ${CXXFILE_DIR}/* -name "*.H"`;  do
-#`find . -name "*.H"`
- H=${headerFile#"./"}
- H="$(basename "${H}")" # Make sure that we take only the file.H
-                        # even if the argument $1 is a path
-  echo headerFile="$headerFile"
-  echo H=$H
-  #if [ ! -f "$HEADER_FILES_PATH/$H" ]
-  #then
-  #echo "creating symbolic link to header file at - $HEADER_FILES_PATH/$H"
-  #ln -sf $HEADER_FILE_LOCATION/$H $HEADER_FILES_PATH/$H
-  #echo "----------------------------"
-  #fi
-done
 
 
-echo "I reached here"
-exit
-#compile the CXX file
 
 
-#CXXFILE_NOEXT=${CXXFILE%".C"} # remove the file extension
-echo CXXFILE_NOEXT=$CXXFILE_NOEXT
-
-build_DIR=$ABSOLUTE_PATH_PROJECT_DIR/build # define a build directory for temporary object files
-
-
-if [ ! -d "$build_DIR" ]
-#
-then
-    mkdir -p "$build_DIR"
-    #echo "created $build_DIR"
-    #echo ".................................."
-#
-fi
-
-g++ --std=c++11 -c $CXXFILE -o $build_DIR/$CXXFILE_NOEXT.o
-
-
-## Create the archive (insert the lib prefix)
-#EX: ar rcs libunuseful.a unuseful.o
-ar rcs $LIB_FILES_PATH/lib$CXXFILE_NOEXT.a $build_DIR/$CXXFILE_NOEXT.o
-
-rm -r $build_DIR
-
-#######START: DO NOT REMOVE######
 ##
 ##Check if the "CXX" to be compiled is specified
 ##Throw error and exit if it is not specified
@@ -334,7 +388,7 @@ DEPTH=${CXXFILE_PATH#"$ABSOLUTE_PATH_PROJECT_SRC_DIR"}
                                         #The next step is grab the C file and the
                                         #path of the directory
                                         #that contains the C file
-#CXXFILENAME="$(basename "${DEPTH}")"
+#CXXFILE_NAME="$(basename "${DEPTH}")"
 DEPTH="$(dirname "${DEPTH}")"
                                         #This is the path without C file
 #"$(dirname "${VAR}")"
