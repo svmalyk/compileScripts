@@ -1,0 +1,139 @@
+#!/bin/bash
+
+#This script is used to compile executables
+echo " "
+
+#
+# Check: Arguments required 1 (one)
+#        argument 1: C++ file to compile
+#        the executable will be named as C++ file with .exe extension
+#
+if [ "$#" -ne 1 ];
+then
+    echo "ERROR(9001): Illegal number of parameters"
+    echo 'INFO       : Compile command: wmake $PROJECT_NAME $FILE_NAME_TO_BE_COMPLIED'
+#echo '      Else export the file name using following command'
+#echo 'export $PROJECT_NAME'
+    exit 9001
+fi
+
+# First argument: C++ file to compile
+CXXFILE="$1" # CXX file to be compiled
+
+# Extract the name of the file to compile if the argument
+# contains path to the file to compile
+CXXFILE="$(basename "$CXXFILE")"
+#echo CXXFILE_NAME=$CXXFILE
+
+# File name without extension
+# This will be used to construct name of the executable
+CXXFILE_NOEXT=${CXXFILE%%.*}
+            # Remove everything after and including dot (.)
+            # The binary will have same name as the C++ file withou extension
+#echo CXXFILE_NOEXT=$CXXFILE_NOEXT
+
+# Getting the absolute path of the C++ file
+# Henceforth, all paths will be absolute paths
+CXXFILE=$(realpath "$1")
+#echo CXXFILE=$CXXFILE
+
+#
+# Check: Existence of C++ file
+#        argument 1: CPP file to compile
+#
+if [ ! -O "$CXXFILE" ];
+then
+    echo "ERROR(9003): File to compile ${2} not found"
+    echo 'INFO       : Check filepath '
+    exit 9003
+fi
+
+# Directory of C++ file
+CXXFILE_PATH=$(dirname $CXXFILE)
+#echo CXXFILE_PATH=$CXXFILE_PATH
+
+# The configuration file stores the paths to libraries
+CONFIGFILE="$CXXFILE_PATH/Make/config"
+#echo CONFIGFILE=$CONFIGFILE
+
+# Check existence of Make folder
+if [[ ! -d "$CXXFILE_PATH/Make"  ]];
+then
+    echo 'ERROR: Make folder not found'
+    echo 'INFO:  Check order of the arguments'
+    echo '       Compile command: wmake $PROJECT_NAME $FILE_NAME_TO_BE_COMPLIED'
+fi
+
+#
+# Check: Verify that the file to be compiled has a valid extension
+#        Valid extensions defined in a array FILE_EXT
+#        Check is done by checking the file extesnsion
+#        against each element of the array FILE_EXT
+#
+if [[ ! -e "$CONFIGFILE"  ]];
+then
+    echo 'ERROR: The libraries to be linked not specified'
+    echo 'INFO:  The libraries must be specified in a file named libFiles'
+    echo '       found in the folder Make'
+fi
+
+
+PROJECT_DIR=${CXXFILE%"/applications"*}
+                   # Remove everything after the substring "/applications"
+#echo PROJECT_DIR=$PROJECT_DIR
+
+BIN_DIR=$PROJECT_DIR/bin
+#echo BIN_DIR=$BIN_DIR
+
+# Create lnInclude folder
+# This file contains all the symbolic links to the header files
+#
+if [ ! -d "$BIN_DIR" ]
+#
+then
+    echo "The binary folder does not exist"
+    echo "........Creating bin........"
+    mkdir "$BIN_DIR"
+    echo "created bin folder: $BIN_DIR"
+    echo ".................................."
+#
+fi
+
+# The config file contains library paths and the libraries that
+# have to be linked during compilation
+#
+CONFIG=$CXXFILE_PATH/Make/config
+
+# source the config file to import the variables
+# $LIB_PATH and $LIBS
+source $CONFIG
+
+
+# command to create executable
+# g++ filename.C -L/path/to/library/folder -lname -o filename
+# -name -> name of the library without prefix "lib"
+# filename -> name of the executable (same as filename.C without extension)
+#
+#    -o: specifies the output executable filename.
+#    -Wall: prints "all" Warning messages.
+#    -g: generates additional symbolic debuggging information for use with gdb debugger.
+:<<END
+echo "g++ -Wall -g -o $BIN_DIR/$CXXFILE_NOEXT\
+ $CXXFILE \
+ ${LIBPATH} \
+ ${LIBS}"
+END
+
+g++ -Wall -g -o $BIN_DIR/$CXXFILE_NOEXT $CXXFILE ${LIBPATH} ${LIBS}
+
+echo "Script successfully executed"
+exit 0
+
+#-------------------DO NOT REFER--------------------
+#prefix="hell"
+#suffix="ld"
+#string="hello-world"
+#foo=${string#"$prefix"}
+#foo=${foo%"$suffix"}
+#echo "${foo}"
+#
