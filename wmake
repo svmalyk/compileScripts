@@ -25,7 +25,7 @@ FILE_EXT=("c" "C" "cpp" "CPP" "cxx" "CXX")
 if [ "$#" -ne 2 ];
 then
     echo "ERROR(9001): Illegal number of parameters"
-    echo 'INFO       : Compile command: wmake $PROJECT_NAME $FILE_NAME_TO_BE_COMPLIED'
+    echo 'INFO       : Compile command: wmake $FILE_NAME_TO_BE_COMPLIED'
 #echo '      Else export the file name using following command'
 #echo 'export $PROJECT_NAME'
     exit 9001
@@ -299,7 +299,7 @@ ar rcs $LIB_PATH/lib$CXXFILE_NOEXT.a $BUILD_PATH/$CXXFILE_NOEXT.o
 #g++ -shared -o  $LIB_PATH/lib$CXXFILE_NOEXT.so $BUILD_PATH/$CXXFILE_NOEXT.o
 
 #echo "File \"$CXXFILE_NAME\" compiled successfully"
-echo "Script successfully executed"
+echo "END-OF-MAKE"
 exit 0
 
 #-------------------DO NOT REFER--------------------

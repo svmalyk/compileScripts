@@ -85,16 +85,39 @@ PROJECT_DIR=${CXXFILE%"/applications"*}
 BIN_DIR=$PROJECT_DIR/bin
 #echo BIN_DIR=$BIN_DIR
 
-# Create lnInclude folder
-# This file contains all the symbolic links to the header files
+EXEFILE_DIR=${CXXFILE##*"/applications/"}
+                   # Remove everything before the substring "/applications"
+EXEFILE_DIR="$(dirname "$EXEFILE_DIR")"
+                   # Remove the file from the path
+#echo EXEFILE_DIR=$EXEFILE_DIR
+
+EXEFILE_BIN_DIR=$BIN_DIR/$EXEFILE_DIR
+#echo EXEFILE_BIN_DIR=$EXEFILE_BIN_DIR
+
+:<<END
+# Create binary folder
 #
 if [ ! -d "$BIN_DIR" ]
 #
 then
-    echo "The binary folder does not exist"
+    echo "The relative path for exe file in binary folder does not exist"
     echo "........Creating bin........"
     mkdir "$BIN_DIR"
     echo "created bin folder: $BIN_DIR"
+    echo ".................................."
+#
+fi
+END
+
+# Create binary folder and folder structure for executable file
+#
+if [ ! -d "$EXEFILE_BIN_DIR" ]
+#
+then
+    echo "The relative path for exe file in binary folder does not exist"
+    echo "........Creating bin........"
+    mkdir -p "$EXEFILE_BIN_DIR"
+    echo "created bin folder: $EXEFILE_BIN_DIR"
     echo ".................................."
 #
 fi
@@ -118,15 +141,15 @@ source $CONFIG
 #    -Wall: prints "all" Warning messages.
 #    -g: generates additional symbolic debuggging information for use with gdb debugger.
 :<<END
-echo "g++ -Wall -g -o $BIN_DIR/$CXXFILE_NOEXT\
+echo "g++ -Wall -g -o $EXEFILE_BIN_DIR/$CXXFILE_NOEXT\
  $CXXFILE \
  ${LIBPATH} \
  ${LIBS}"
 END
 
-g++ -Wall -g -o $BIN_DIR/$CXXFILE_NOEXT $CXXFILE ${LIBPATH} ${LIBS}
+g++ -Wall -g -o $EXEFILE_BIN_DIR/$CXXFILE_NOEXT $CXXFILE ${LIBPATH} ${LIBS}
 
-echo "Script successfully executed"
+echo "END-OF-RUN"
 exit 0
 
 #-------------------DO NOT REFER--------------------
