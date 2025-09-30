@@ -159,8 +159,6 @@ CXXFILE_DEPTH=${CXXFILE_DIR#*$SRC_DIR}
                  # Trim the string before and including src
 #echo CXXFILE_DEPTH=$CXXFILE_DEPTH
 
-
-
 # Create lnInclude folder
 # This file contains all the symbolic links to the header files
 #
@@ -183,14 +181,13 @@ fi
 if [ ! -d "$LNINCLUDE_DIR$CXXFILE_DEPTH" ]
 #
 then
-    echo "The ymbolic link folder structure does not exist"
+    echo "The symbolic link folder structure does not exist"
     echo "........Creating ymbolic link folder structure........"
-    mkdir $LNINCLUDE_DIR$CXXFILE_DEPTH
+    mkdir -p $LNINCLUDE_DIR$CXXFILE_DEPTH
     echo "created symbolic link folder structure: $LNINCLUDE_DIR$CXXFILE_DEPTH"
     echo ".................................."
 #
 fi
-
 
 
 #
@@ -242,12 +239,11 @@ if [ ! -d "$LIB_PATH" ]
 then
     echo "The folder(s) for libraries does not exist"
     echo "........Creating folder structure........"
-    mkdir $LIB_PATH
+    mkdir -p $LIB_PATH
     echo "created LIB folder structure: $LIB_PATH"
     echo ".................................."
 #
 fi
-
 
 
 #compile the CXX file
@@ -275,7 +271,7 @@ if [ ! -d "$BUILD_PATH" ]
 then
     echo "The folder(s) in build directory for object files does not exist"
     echo "........Creating folder structure........"
-    mkdir $BUILD_PATH
+    mkdir -p $BUILD_PATH
     echo "created build folder structure: $BUILD_PATH"
     echo ".................................."
 #
