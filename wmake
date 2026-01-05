@@ -117,6 +117,7 @@ then
     echo 'ERROR: The file to compile is not a C++ file'
     echo 'INFO:  Check order of the arguments'
     echo '       Compile command: wmake $PROJECT_NAME $FILE_NAME_TO_BE_COMPLIED'
+    exit 9003
 fi
 
 
@@ -278,7 +279,8 @@ then
 fi
 
 # Create the object file
-g++ --std=c++11 -c -Wall -Werror -fpic $CXXFILE -o $BUILD_PATH/$CXXFILE_NOEXT.o
+#g++ --std=c++11 -c -Wall -Werror -fpic $CXXFILE -o $BUILD_PATH/$CXXFILE_NOEXT.o
+g++ --std=c++23 -c -Wall -Werror -fpic $CXXFILE -o $BUILD_PATH/$CXXFILE_NOEXT.o
 
 
 
